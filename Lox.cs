@@ -2,7 +2,9 @@ namespace SharpLox;
 
 public static class Lox
 {
+    private static readonly Interpreter Interpreter = new();
     private static bool HadError;
+    private static bool HadRuntimeError;
 
     public static void RunFile(string path)
     {
@@ -11,6 +13,7 @@ public static class Lox
 
         // Indicate an error in the exit code.
         if (HadError) Environment.Exit(65);
+        if (HadRuntimeError) Environment.Exit(70);
     }
 
     public static void RunPrompt()
@@ -42,6 +45,13 @@ public static class Lox
         }
     }
 
+    public static void RuntimeError(RuntimeError error)
+    {
+        var errMessage = $"{error.Message}\n[line {error.Token.Line}]";
+        Console.Error.WriteLine(errMessage);
+        HadRuntimeError = true;
+    }
+
     private static void Run(string source)
     {
         var scanner = new Scanner(source);
@@ -50,15 +60,15 @@ public static class Lox
         var expression = parser.Parse();
 
         // Stop if there was a syntax error.
-        if (HadError) return;
+        if (HadError || expression is null) return;
 
-        Console.WriteLine(new AstPrinter().Print(expression!));
+        Interpreter.Interpret(expression);
     }
 
     private static void Report(int line, string where, string message)
     {
-        var error = $"[line {line}] Error{where}: {message}";
-        Console.Error.WriteLine(error);
+        var errMessage = $"[line {line}] Error{where}: {message}";
+        Console.Error.WriteLine(errMessage);
         HadError = true;
     }
 }
