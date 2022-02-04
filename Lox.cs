@@ -15,7 +15,7 @@ public static class Lox
 
     public static void RunPrompt()
     {
-        while(true)
+        while (true)
         {
             Console.Write("> ");
             var line = Console.ReadLine();
@@ -30,15 +30,29 @@ public static class Lox
         Report(line, "", message);
     }
 
+    public static void Error(Token token, String message)
+    {
+        if (token.Type == TokenType.EOF)
+        {
+            Report(token.Line, " at end", message);
+        }
+        else
+        {
+            Report(token.Line, $" at '{token.Lexeme}'", message);
+        }
+    }
+
     private static void Run(string source)
     {
         var scanner = new Scanner(source);
         var tokens = scanner.ScanTokens();
+        var parser = new Parser(tokens);
+        var expression = parser.Parse();
 
-        // For now, just print the tokens.
-        foreach (var token in tokens) {
-            Console.WriteLine(token);
-        }
+        // Stop if there was a syntax error.
+        if (HadError) return;
+
+        Console.WriteLine(new AstPrinter().Print(expression!));
     }
 
     private static void Report(int line, string where, string message)

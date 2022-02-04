@@ -22,7 +22,7 @@ public interface Expr
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitGroupingExpr(this);
     }
 
-    public record Literal(object Value) : Expr
+    public record Literal(object? Value) : Expr
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitLiteralExpr(this);
     }
