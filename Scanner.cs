@@ -4,14 +4,36 @@ namespace SharpLox;
 
 public class Scanner
 {
+    private static readonly IReadOnlyDictionary<string, TokenType> Keywords = new Dictionary<string, TokenType> {
+        { "and",    AND },
+        { "class",  CLASS },
+        { "else",   ELSE },
+        { "false",  FALSE },
+        { "for",    FOR },
+        { "fun",    FUN },
+        { "if",     IF },
+        { "nil",    NIL },
+        { "or",     OR },
+        { "print",  PRINT },
+        { "return", RETURN },
+        { "super",  SUPER },
+        { "this",   THIS },
+        { "true",   TRUE },
+        { "var",    VAR },
+        { "while",  WHILE }
+    };
+
     private readonly string source;
     private readonly List<Token> tokens = new();
 
-    private int start = 0;
-    private int current = 0;
+    private int startPos = 0;
+    private int currentPos = 0;
     private int line = 1;
 
-    private bool AtEnd => current >= source.Length;
+    private bool AtEnd => currentPos >= source.Length;
+    private char Current => AtEnd ? '\0' : source[currentPos];
+    private char Next => (currentPos + 1 >= source.Length) ? '\0' : source[currentPos + 1];
+    private string TokenText => source[startPos..currentPos];
 
     public Scanner(string source)
     {
@@ -20,10 +42,10 @@ public class Scanner
 
     public List<Token> ScanTokens()
     {
-        while(!AtEnd)
+        while (!AtEnd)
         {
             // We are at the beginning of the next lexeme.
-            start = current;
+            startPos = currentPos;
             ScanToken();
         }
 
@@ -64,14 +86,17 @@ public class Scanner
 
             // Comment or single slash
             case '/':
-                if (Match('/')) {
+                if (Match('/'))
+                {
                     // A comment goes until the end of the line.
-                    while (Peek() != '\n' && !AtEnd) Advance();
-                } else {
+                    while (Current != '\n' && !AtEnd) Advance();
+                }
+                else
+                {
                     AddToken(SLASH);
                 }
                 break;
-                
+
             // Ignore whitespace
             case ' ':
             case '\r':
@@ -81,36 +106,92 @@ public class Scanner
                 line++;
                 break;
 
-            // Everything else is an error
+            // Strings
+            case '"': ScanString(); break;
+
+            // Scan for alphanumerics, otherwise error
             default:
-                Lox.Error(line, "Unexpected character.");
+                if (IsDigit(c))
+                {
+                    ScanNumber();
+                }
+                else if (IsAlpha(c))
+                {
+                    ScanIdentifier();
+                }
+                else
+                {
+                    Lox.Error(line, "Unexpected character.");
+                }
                 break;
         }
     }
 
-    private char Advance() {
-        return source[current++];
+    private char Advance() => source[currentPos++];
+
+    private void AddToken(TokenType type, object? literal = null)
+    {
+        tokens.Add(new Token(type, TokenText, literal, line));
     }
 
-    private void AddToken(TokenType type) {
-        AddToken(type, null);
-    }
-
-    private void AddToken(TokenType type, object? literal) {
-        var text = source.Substring(start, current);
-        tokens.Add(new Token(type, text, literal, line));
-    }
-
-    private bool Match(char expected) {
+    private bool Match(char expected)
+    {
         if (AtEnd) return false;
-        if (source[current] != expected) return false;
+        if (source[currentPos] != expected) return false;
 
-        current++;
+        currentPos++;
         return true;
     }
 
-    private char Peek() {
-        if (AtEnd) return '\0';
-        return source[current];
+    private void ScanIdentifier()
+    {
+        while (IsAlphaNumeric(Current)) Advance();
+
+        AddToken(Keywords.GetValueOrDefault(TokenText, IDENTIFIER));
     }
+
+    private void ScanNumber()
+    {
+        while (IsDigit(Current)) Advance();
+
+        // Look for a fractional part.
+        if (Current == '.' && IsDigit(Next))
+        {
+            // Consume the "."
+            Advance();
+
+            while (IsDigit(Current)) Advance();
+        }
+
+        var value = double.Parse(TokenText);
+        AddToken(NUMBER, value);
+    }
+
+    private void ScanString()
+    {
+        while (Current != '"' && !AtEnd)
+        {
+            if (Current == '\n') line++;
+            Advance();
+        }
+
+        if (AtEnd)
+        {
+            Lox.Error(line, "Unterminated string.");
+            return;
+        }
+
+        // The closing ".
+        Advance();
+
+        // Trim the surrounding quotes.
+        var value = source[(startPos + 1)..(currentPos - 1)];
+        AddToken(STRING, value);
+    }
+
+    private static bool IsAlpha(char c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+
+    private static bool IsAlphaNumeric(char c) => IsAlpha(c) || IsDigit(c);
+
+    private static bool IsDigit(char c) => c >= '0' && c <= '9';
 }

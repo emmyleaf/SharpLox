@@ -1,0 +1,5 @@
+{
+    "omnisharp.enableImportCompletion": true,
+    "omnisharp.organizeImportsOnFormat": true,
+    "omnisharp.useModernNet": true
+}
