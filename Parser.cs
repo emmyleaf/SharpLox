@@ -18,19 +18,38 @@ public class Parser
         this.tokens = tokens;
     }
 
-    public Expr? Parse()
+    public List<Stmt> Parse()
     {
-        try
-        {
-            return Expression();
+        var statements = new List<Stmt>();
+        while (!AtEnd) {
+            statements.Add(Statement());
         }
-        catch (ParseError)
-        {
-            return null;
-        }
+
+        return statements;
     }
 
     #region Rules
+
+    private Stmt Statement()
+    {
+        if (Match(PRINT)) return PrintStatement();
+
+        return ExpressionStatement();
+    }
+
+    private Stmt PrintStatement()
+    {
+        var value = Expression();
+        Consume(SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Print(value);
+    }
+
+    private Stmt ExpressionStatement()
+    {
+        var expr = Expression();
+        Consume(SEMICOLON, "Expect ';' after expression.");
+        return new Stmt.Expression(expr);
+    }
 
     private Expr Expression()
     {

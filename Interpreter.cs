@@ -2,14 +2,13 @@ using static SharpLox.TokenType;
 
 namespace SharpLox;
 
-public class Interpreter : Expr.Visitor<object?>
+public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
 {
-    public void Interpret(Expr expression)
+    public void Interpret(List<Stmt> statements)
     {
         try
         {
-            var value = Evaluate(expression);
-            Console.WriteLine(Stringify(value));
+            statements.ForEach(Execute);
         }
         catch (RuntimeError error)
         {
@@ -17,7 +16,24 @@ public class Interpreter : Expr.Visitor<object?>
         }
     }
 
-    #region Visitor Implementation
+    #region Statement Visitor Implementation
+
+    public object? VisitExpressionStmt(Stmt.Expression stmt)
+    {
+        Evaluate(stmt.Expr);
+        return null;
+    }
+
+    public object? VisitPrintStmt(Stmt.Print stmt)
+    {
+        var value = Evaluate(stmt.Expr);
+        Console.WriteLine(Stringify(value));
+        return null;
+    }
+
+    #endregion
+
+    #region Expression Visitor Implementation
 
     public object? VisitBinaryExpr(Expr.Binary expr)
     {
@@ -92,6 +108,11 @@ public class Interpreter : Expr.Visitor<object?>
     }
 
     #endregion
+
+    private void Execute(Stmt stmt)
+    {
+        stmt.Accept(this);
+    }
 
     private object? Evaluate(Expr expr)
     {

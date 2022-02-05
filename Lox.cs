@@ -57,12 +57,12 @@ public static class Lox
         var scanner = new Scanner(source);
         var tokens = scanner.ScanTokens();
         var parser = new Parser(tokens);
-        var expression = parser.Parse();
+        var statements = parser.Parse();
 
         // Stop if there was a syntax error.
-        if (HadError || expression is null) return;
+        if (HadError) return;
 
-        Interpreter.Interpret(expression);
+        Interpreter.Interpret(statements);
     }
 
     private static void Report(int line, string where, string message)
