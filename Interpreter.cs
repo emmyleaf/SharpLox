@@ -4,6 +4,8 @@ namespace SharpLox;
 
 public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
 {
+    private readonly Env environment = new();
+
     public void Interpret(List<Stmt> statements)
     {
         try
@@ -28,6 +30,18 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
     {
         var value = Evaluate(stmt.Expr);
         Console.WriteLine(Stringify(value));
+        return null;
+    }
+
+    public object? VisitVarStmt(Stmt.Var stmt)
+    {
+        object? value = null;
+        if (stmt.Initializer != null)
+        {
+            value = Evaluate(stmt.Initializer);
+        }
+
+        environment.Define(stmt.Name.Lexeme, value);
         return null;
     }
 
@@ -105,6 +119,11 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
             default:
                 return null;
         };
+    }
+
+    public object? VisitVariableExpr(Expr.Variable expr)
+    {
+        return environment.Get(expr.Name);
     }
 
     #endregion

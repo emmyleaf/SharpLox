@@ -22,13 +22,42 @@ public class Parser
     {
         var statements = new List<Stmt>();
         while (!AtEnd) {
-            statements.Add(Statement());
+            var decl = Declaration();
+            if (decl is not null) statements.Add(decl);
         }
 
         return statements;
     }
 
     #region Rules
+
+    private Stmt? Declaration()
+    {
+        try
+        {
+            if (Match(VAR)) return VarDeclaration();
+
+            return Statement();
+        }
+        catch (ParseError)
+        {
+            Synchronize();
+            return null;
+        }
+    }
+
+    private Stmt VarDeclaration()
+    {
+        Token name = Consume(IDENTIFIER, "Expect variable name.");
+
+        Expr? initializer = null;
+        if (Match(EQUAL)) {
+            initializer = Expression();
+        }
+
+        Consume(SEMICOLON, "Expect ';' after variable declaration.");
+        return new Stmt.Var(name, initializer);
+    }
 
     private Stmt Statement()
     {
@@ -133,6 +162,11 @@ public class Parser
         if (Match(NUMBER, STRING))
         {
             return new Expr.Literal(Previous.Literal);
+        }
+
+        if (Match(IDENTIFIER))
+        {
+            return new Expr.Variable(Previous);
         }
 
         if (Match(LEFT_PAREN))

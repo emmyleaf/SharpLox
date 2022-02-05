@@ -8,6 +8,7 @@ public interface Expr
         T VisitGroupingExpr(Grouping expr);
         T VisitLiteralExpr(Literal expr);
         T VisitUnaryExpr(Unary expr);
+        T VisitVariableExpr(Variable expr);
     }
 
     T Accept<T>(Visitor<T> visitor);
@@ -30,5 +31,10 @@ public interface Expr
     public record Unary(Token Operator, Expr Right) : Expr
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitUnaryExpr(this);
+    }
+
+    public record Variable(Token Name) : Expr
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitVariableExpr(this);
     }
 }
