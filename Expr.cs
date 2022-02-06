@@ -8,6 +8,7 @@ public interface Expr
         T VisitBinaryExpr(Binary expr);
         T VisitGroupingExpr(Grouping expr);
         T VisitLiteralExpr(Literal expr);
+        T VisitLogicalExpr(Logical expr);
         T VisitUnaryExpr(Unary expr);
         T VisitVariableExpr(Variable expr);
     }
@@ -32,6 +33,11 @@ public interface Expr
     public record Literal(object? Value) : Expr
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitLiteralExpr(this);
+    }
+
+    public record Logical(Expr Left, Token Operator, Expr Right) : Expr
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitLogicalExpr(this);
     }
 
     public record Unary(Token Operator, Expr Right) : Expr

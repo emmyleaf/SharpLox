@@ -32,6 +32,19 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         return null;
     }
 
+    public object? VisitIfStmt(Stmt.If stmt)
+    {
+        if (Truthy(Evaluate(stmt.Condition)))
+        {
+            Execute(stmt.ThenBranch);
+        }
+        else if (stmt.ElseBranch is not null)
+        {
+            Execute(stmt.ElseBranch);
+        }
+        return null;
+    }
+
     public object? VisitPrintStmt(Stmt.Print stmt)
     {
         var value = Evaluate(stmt.Expr);
@@ -116,6 +129,22 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
     public object? VisitLiteralExpr(Expr.Literal expr)
     {
         return expr.Value;
+    }
+
+    public object? VisitLogicalExpr(Expr.Logical expr)
+    {
+        var left = Evaluate(expr.Left);
+
+        if (expr.Operator.Type == OR)
+        {
+            if (Truthy(left)) return left;
+        }
+        else
+        {
+            if (!Truthy(left)) return left;
+        }
+
+        return Evaluate(expr.Right);
     }
 
     public object? VisitUnaryExpr(Expr.Unary expr)

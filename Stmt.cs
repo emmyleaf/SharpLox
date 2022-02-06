@@ -6,6 +6,7 @@ public interface Stmt
     {
         T VisitBlockStmt(Block stmt);
         T VisitExpressionStmt(Expression stmt);
+        T VisitIfStmt(If stmt);
         T VisitPrintStmt(Print stmt);
         T VisitVarStmt(Var stmt);
     }
@@ -20,6 +21,11 @@ public interface Stmt
     public record Expression(Expr Expr) : Stmt
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitExpressionStmt(this);
+    }
+
+    public record If(Expr Condition, Stmt ThenBranch, Stmt? ElseBranch) : Stmt
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitIfStmt(this);
     }
 
     public record Print(Expr Expr) : Stmt
