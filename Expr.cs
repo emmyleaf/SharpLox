@@ -4,6 +4,7 @@ public interface Expr
 {
     public interface Visitor<T>
     {
+        T VisitAssignExpr(Assign expr);
         T VisitBinaryExpr(Binary expr);
         T VisitGroupingExpr(Grouping expr);
         T VisitLiteralExpr(Literal expr);
@@ -12,6 +13,11 @@ public interface Expr
     }
 
     T Accept<T>(Visitor<T> visitor);
+
+    public record Assign(Token Name, Expr Value) : Expr
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitAssignExpr(this);
+    }
 
     public record Binary(Expr Left, Token Operator, Expr Right) : Expr
     {

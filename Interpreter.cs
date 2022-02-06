@@ -4,7 +4,7 @@ namespace SharpLox;
 
 public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
 {
-    private readonly Env environment = new();
+    private Env environment = new();
 
     public void Interpret(List<Stmt> statements)
     {
@@ -19,6 +19,12 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
     }
 
     #region Statement Visitor Implementation
+
+    public object? VisitBlockStmt(Stmt.Block stmt)
+    {
+        ExecuteBlock(stmt.statements, new Env(environment));
+        return null;
+    }
 
     public object? VisitExpressionStmt(Stmt.Expression stmt)
     {
@@ -48,6 +54,13 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
     #endregion
 
     #region Expression Visitor Implementation
+
+    public object? VisitAssignExpr(Expr.Assign expr)
+    {
+        var value = Evaluate(expr.Value);
+        environment.Assign(expr.Name, value);
+        return value;
+    }
 
     public object? VisitBinaryExpr(Expr.Binary expr)
     {
@@ -128,14 +141,28 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
 
     #endregion
 
+    private object? Evaluate(Expr expr)
+    {
+        return expr.Accept(this);
+    }
+
     private void Execute(Stmt stmt)
     {
         stmt.Accept(this);
     }
 
-    private object? Evaluate(Expr expr)
+    private void ExecuteBlock(List<Stmt> statements, Env blockEnv)
     {
-        return expr.Accept(this);
+        var previous = environment;
+        try
+        {
+            environment = blockEnv;
+            statements.ForEach(Execute);
+        }
+        finally
+        {
+            environment = previous;
+        }
     }
 
     private static void CheckNumberOperand(Token op, object? operand)

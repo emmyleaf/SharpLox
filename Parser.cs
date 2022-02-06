@@ -62,6 +62,7 @@ public class Parser
     private Stmt Statement()
     {
         if (Match(PRINT)) return PrintStatement();
+        if (Match(LEFT_BRACE)) return new Stmt.Block(Block());
 
         return ExpressionStatement();
     }
@@ -80,9 +81,42 @@ public class Parser
         return new Stmt.Expression(expr);
     }
 
+    private List<Stmt> Block() {
+        List<Stmt> statements = new();
+
+        while (!Check(RIGHT_BRACE) && !AtEnd)
+        {
+            var decl = Declaration();
+            if (decl is not null) statements.Add(decl);
+        }
+
+        Consume(RIGHT_BRACE, "Expect '}' after block.");
+        return statements;
+    }
+
     private Expr Expression()
     {
-        return Equality();
+        return Assignment();
+    }
+
+    private Expr Assignment()
+    {
+        var expr = Equality();
+
+        if (Match(EQUAL))
+        {
+            var equals = Previous;
+            var value = Assignment();
+
+            if (expr is Expr.Variable variable)
+            {
+                return new Expr.Assign(variable.Name, value);
+            }
+
+            Error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     private Expr Equality()

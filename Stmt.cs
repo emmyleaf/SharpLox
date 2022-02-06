@@ -4,12 +4,18 @@ public interface Stmt
 {
     public interface Visitor<T>
     {
+        T VisitBlockStmt(Block stmt);
         T VisitExpressionStmt(Expression stmt);
         T VisitPrintStmt(Print stmt);
         T VisitVarStmt(Var stmt);
     }
 
     T Accept<T>(Visitor<T> visitor);
+
+    public record Block(List<Stmt> statements) : Stmt
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitBlockStmt(this);
+    }
 
     public record Expression(Expr Expr) : Stmt
     {

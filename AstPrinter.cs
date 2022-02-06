@@ -6,6 +6,11 @@ public class AstPrinter : Expr.Visitor<string>
 {
     public string Print(Expr expr) => expr.Accept(this);
 
+    public string VisitAssignExpr(Expr.Assign expr)
+    {
+        throw new NotImplementedException();
+    }
+
     public string VisitBinaryExpr(Expr.Binary expr)
     {
         return Parenthesize(expr.Operator.Lexeme, expr.Left, expr.Right);
