@@ -6,11 +6,13 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
 {
     public readonly Env Globals;
     private Env environment;
+    private readonly Dictionary<Expr, int> locals;
 
     public Interpreter()
     {
         Globals = new();
         environment = Globals;
+        locals = new();
         Globals.Define("clock", new LoxCallable.Clock());
     }
 
@@ -26,11 +28,13 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         }
     }
 
+    public void Resolve(Expr expr, int depth) => locals[expr] = depth;
+
     #region Statement Visitor Implementation
 
     public object? VisitBlockStmt(Stmt.Block stmt)
     {
-        ExecuteBlock(stmt.statements, new Env(environment));
+        ExecuteBlock(stmt.Statements, new Env(environment));
         return null;
     }
 
@@ -216,7 +220,7 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
 
     public object? VisitVariableExpr(Expr.Variable expr)
     {
-        return environment.Get(expr.Name);
+        return LookUpVariable(expr.Name, expr);
     }
 
     #endregion
@@ -243,6 +247,16 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         {
             environment = previous;
         }
+    }
+
+    private object? LookUpVariable(Token name, Expr expr)
+    {
+        if (locals.TryGetValue(expr, out var distance))
+        {
+            return environment.GetAt(distance, name.Lexeme);
+        }
+
+        return Globals.Get(name);
     }
 
     private static void CheckNumberOperand(Token op, object? operand)

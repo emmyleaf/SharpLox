@@ -16,7 +16,7 @@ public interface Stmt
 
     T Accept<T>(Visitor<T> visitor);
 
-    public record Block(List<Stmt> statements) : Stmt
+    public record Block(List<Stmt> Statements) : Stmt
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitBlockStmt(this);
     }

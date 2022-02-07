@@ -10,6 +10,16 @@ public class Env
         Enclosing = enclosing;
     }
 
+    public Env Ancestor(int distance)
+    {
+        var environment = this;
+        for (int i = 0; i < distance; i++)
+        {
+            environment = environment.Enclosing!; // we just gotta trust
+        }
+        return environment;
+    }
+
     public void Assign(Token name, object? value)
     {
         // This was wrong in previous commit. TryAdd is definitely not equivalent to this!
@@ -46,5 +56,10 @@ public class Env
         }
 
         throw new RuntimeError(name, $"Undefined variable '{name.Lexeme}'.");
+    }
+
+    public object? GetAt(int distance, String name)
+    {
+        return Ancestor(distance).Values[name];
     }
 }
