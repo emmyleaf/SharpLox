@@ -12,8 +12,10 @@ public class Env
 
     public void Assign(Token name, object? value)
     {
-        if (Values.TryAdd(name.Lexeme, value))
+        // This was wrong in previous commit. TryAdd is definitely not equivalent to this!
+        if (Values.ContainsKey(name.Lexeme))
         {
+            Values[name.Lexeme] = value;
             return;
         }
 

@@ -61,11 +61,45 @@ public class Parser
 
     private Stmt Statement()
     {
+        if (Match(FOR)) return ForStatement();
         if (Match(IF)) return IfStatement();
         if (Match(PRINT)) return PrintStatement();
+        if (Match(WHILE)) return WhileStatement();
         if (Match(LEFT_BRACE)) return new Stmt.Block(Block());
 
         return ExpressionStatement();
+    }
+
+    private Stmt ForStatement()
+    {
+        Consume(LEFT_PAREN, "Expect '(' after 'for'.");
+
+        var initializer = Match(SEMICOLON) ? null :
+            Match(VAR) ? VarDeclaration() : ExpressionStatement();
+
+        var condition = Check(SEMICOLON) ? null : Expression();
+        Consume(SEMICOLON, "Expect ';' after loop condition.");
+
+        var increment = Check(RIGHT_PAREN) ? null : Expression();
+        Consume(RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        var body = Statement();
+
+        if (increment is not null)
+        {
+            var incStmt = new Stmt.Expression(increment);
+            body = new Stmt.Block(new List<Stmt> { body, incStmt });
+        }
+
+        condition ??= new Expr.Literal(true);
+        body = new Stmt.While(condition, body);
+
+        if (initializer is not null)
+        {
+            body = new Stmt.Block(new List<Stmt> { initializer, body });
+        }
+
+        return body;
     }
 
     private Stmt IfStatement()
@@ -85,6 +119,16 @@ public class Parser
         var value = Expression();
         Consume(SEMICOLON, "Expect ';' after value.");
         return new Stmt.Print(value);
+    }
+
+    private Stmt WhileStatement()
+    {
+        Consume(LEFT_PAREN, "Expect '(' after 'while'.");
+        var condition = Expression();
+        Consume(RIGHT_PAREN, "Expect ')' after while condition.");
+        var body = Statement();
+
+        return new Stmt.While(condition, body);
     }
 
     private Stmt ExpressionStatement()

@@ -9,6 +9,7 @@ public interface Stmt
         T VisitIfStmt(If stmt);
         T VisitPrintStmt(Print stmt);
         T VisitVarStmt(Var stmt);
+        T VisitWhileStmt(While stmt);
     }
 
     T Accept<T>(Visitor<T> visitor);
@@ -36,5 +37,10 @@ public interface Stmt
     public record Var(Token Name, Expr? Initializer) : Stmt
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitVarStmt(this);
+    }
+
+    public record While(Expr Condition, Stmt Body) : Stmt
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitWhileStmt(this);
     }
 }

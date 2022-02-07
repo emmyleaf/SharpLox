@@ -64,6 +64,15 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         return null;
     }
 
+    public object? VisitWhileStmt(Stmt.While stmt)
+    {
+        while (Truthy(Evaluate(stmt.Condition)))
+        {
+            Execute(stmt.Body);
+        }
+        return null;
+    }
+
     #endregion
 
     #region Expression Visitor Implementation
