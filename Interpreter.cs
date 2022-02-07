@@ -4,7 +4,15 @@ namespace SharpLox;
 
 public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
 {
-    private Env environment = new();
+    public readonly Env Globals;
+    private Env environment;
+
+    public Interpreter()
+    {
+        Globals = new();
+        environment = Globals;
+        Globals.Define("clock", new LoxCallable.Clock());
+    }
 
     public void Interpret(List<Stmt> statements)
     {
@@ -32,6 +40,13 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         return null;
     }
 
+    public object? VisitFunctionStmt(Stmt.Function stmt)
+    {
+        var function = new LoxFunction(stmt, environment);
+        environment.Define(stmt.Name.Lexeme, function);
+        return null;
+    }
+
     public object? VisitIfStmt(Stmt.If stmt)
     {
         if (Truthy(Evaluate(stmt.Condition)))
@@ -52,10 +67,16 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         return null;
     }
 
+    public object? VisitReturnStmt(Stmt.Return stmt)
+    {
+        var value = stmt.Value is null ? null : Evaluate(stmt.Value);
+        throw new Return(value);
+    }
+
     public object? VisitVarStmt(Stmt.Var stmt)
     {
         object? value = null;
-        if (stmt.Initializer != null)
+        if (stmt.Initializer is not null)
         {
             value = Evaluate(stmt.Initializer);
         }
@@ -91,7 +112,7 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
 
         switch (expr.Operator.Type)
         {
-            case BANG_EQUAL: 
+            case BANG_EQUAL:
                 return !object.Equals(left, right);
             case EQUAL_EQUAL:
                 return object.Equals(left, right);
@@ -111,11 +132,13 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
                 CheckNumberOperands(expr.Operator, left, right);
                 return (double)left! - (double)right!;
             case PLUS:
-                if (left is double && right is double) {
+                if (left is double && right is double)
+                {
                     return (double)left + (double)right;
-                } 
+                }
 
-                if (left is string && right is string) {
+                if (left is string && right is string)
+                {
                     return (string)left + (string)right;
                 }
 
@@ -128,6 +151,25 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
                 return (double)left! * (double)right!;
             default: return null;
         };
+    }
+
+    public object? VisitCallExpr(Expr.Call expr)
+    {
+        var function = Evaluate(expr.Callee) as LoxCallable;
+        var arguments = expr.Arguments.ConvertAll(Evaluate);
+
+        if (function is null)
+        {
+            throw new RuntimeError(expr.Paren, "Can only call function and classes.");
+        }
+
+        if (arguments.Count != function.Arity)
+        {
+            var message = $"Expected {function.Arity} arguments but got {arguments.Count}.";
+            throw new RuntimeError(expr.Paren, message);
+        }
+
+        return function.Call(this, arguments);
     }
 
     public object? VisitGroupingExpr(Expr.Grouping expr)
@@ -189,7 +231,7 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         stmt.Accept(this);
     }
 
-    private void ExecuteBlock(List<Stmt> statements, Env blockEnv)
+    public void ExecuteBlock(List<Stmt> statements, Env blockEnv)
     {
         var previous = environment;
         try
@@ -219,12 +261,15 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         }
     }
 
-    private static string? Stringify(object? o) {
+    private static string? Stringify(object? o)
+    {
         if (o is null) return "nil";
 
-        if (o is double n) {
+        if (o is double n)
+        {
             var text = n.ToString();
-            if (text.EndsWith(".0")) {
+            if (text.EndsWith(".0"))
+            {
                 return text[0..(text.Length - 2)];
             }
             return text;

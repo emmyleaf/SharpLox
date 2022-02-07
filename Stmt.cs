@@ -6,8 +6,10 @@ public interface Stmt
     {
         T VisitBlockStmt(Block stmt);
         T VisitExpressionStmt(Expression stmt);
+        T VisitFunctionStmt(Function stmt);
         T VisitIfStmt(If stmt);
         T VisitPrintStmt(Print stmt);
+        T VisitReturnStmt(Return stmt);
         T VisitVarStmt(Var stmt);
         T VisitWhileStmt(While stmt);
     }
@@ -24,6 +26,11 @@ public interface Stmt
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitExpressionStmt(this);
     }
 
+    public record Function(Token Name, List<Token> Parameters, List<Stmt> Body) : Stmt
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitFunctionStmt(this);
+    }
+
     public record If(Expr Condition, Stmt ThenBranch, Stmt? ElseBranch) : Stmt
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitIfStmt(this);
@@ -32,6 +39,11 @@ public interface Stmt
     public record Print(Expr Expr) : Stmt
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitPrintStmt(this);
+    }
+
+    public record Return(Token Keyword, Expr? Value) : Stmt
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitReturnStmt(this);
     }
 
     public record Var(Token Name, Expr? Initializer) : Stmt

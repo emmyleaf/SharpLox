@@ -6,6 +6,7 @@ public interface Expr
     {
         T VisitAssignExpr(Assign expr);
         T VisitBinaryExpr(Binary expr);
+        T VisitCallExpr(Call expr);
         T VisitGroupingExpr(Grouping expr);
         T VisitLiteralExpr(Literal expr);
         T VisitLogicalExpr(Logical expr);
@@ -23,6 +24,11 @@ public interface Expr
     public record Binary(Expr Left, Token Operator, Expr Right) : Expr
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitBinaryExpr(this);
+    }
+
+    public record Call(Expr Callee, Token Paren, List<Expr> Arguments) : Expr
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitCallExpr(this);
     }
 
     public record Grouping(Expr Expression) : Expr
