@@ -40,7 +40,23 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
 
     public object? VisitClassStmt(Stmt.Class stmt)
     {
+        LoxClass? superclass = null;
+        if (stmt.Superclass is not null)
+        {
+            superclass = Evaluate(stmt.Superclass) as LoxClass;
+            if (superclass is null)
+            {
+                throw new RuntimeError(stmt.Superclass.Name, "Superclass must be a class.");
+            }
+        }
+
         environment.Define(stmt.Name.Lexeme, null);
+
+        if (stmt.Superclass is not null)
+        {
+            environment = new Env(environment);
+            environment.Define("super", superclass);
+        }
 
         Dictionary<String, LoxFunction> methods = new();
         foreach (var method in stmt.Methods)
@@ -50,7 +66,13 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
             methods[method.Name.Lexeme] = function;
         }
 
-        var klass = new LoxClass(stmt.Name.Lexeme, methods);
+        var klass = new LoxClass(stmt.Name.Lexeme, superclass, methods);
+
+        if (stmt.Superclass is not null)
+        {
+            environment = environment.Enclosing!;
+        }
+
         environment.Assign(stmt.Name, klass);
         return null;
     }
@@ -241,6 +263,22 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         var value = Evaluate(expr.Value);
         instance.Set(expr.Name, value);
         return value;
+    }
+
+    public object? VisitSuperExpr(Expr.Super expr)
+    {
+        // extremely yolo with nullability by this point
+        var distance = locals.GetValueOrDefault(expr);
+        var superclass = environment.GetAt(distance, "super") as LoxClass;
+        var instance = environment.GetAt(distance - 1, "this") as LoxInstance;
+        var method = superclass?.FindMethod(expr.Method.Lexeme);
+
+        if (method is null)
+        {
+            throw new RuntimeError(expr.Method, $"Undefined property '{expr.Method.Lexeme}'.");
+        }
+
+        return method.Bind(instance!);
     }
 
     public object? VisitThisExpr(Expr.This expr)

@@ -3,13 +3,15 @@ namespace SharpLox;
 public class LoxClass : LoxCallable
 {
     public readonly string Name;
+    private readonly LoxClass? superclass;
     private readonly Dictionary<String, LoxFunction> methods;
 
     public int Arity => FindMethod("init")?.Arity ?? 0;
 
-    public LoxClass(string name, Dictionary<String, LoxFunction> methods)
+    public LoxClass(string name, LoxClass? superclass, Dictionary<String, LoxFunction> methods)
     {
         this.Name = name;
+        this.superclass = superclass;
         this.methods = methods;
     }
 
@@ -27,7 +29,12 @@ public class LoxClass : LoxCallable
 
     public LoxFunction? FindMethod(String name)
     {
-        return methods.TryGetValue(name, out var method) ? method : null;
+        if (methods.TryGetValue(name, out var method))
+        {
+            return method;
+        }
+
+        return superclass?.FindMethod(name);
     }
 
     public override string ToString() => Name;

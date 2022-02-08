@@ -22,7 +22,7 @@ public interface Stmt
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitBlockStmt(this);
     }
 
-    public record Class(Token Name, List<Function> Methods) : Stmt
+    public record Class(Token Name, Expr.Variable? Superclass, List<Function> Methods) : Stmt
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitClassStmt(this);
     }
