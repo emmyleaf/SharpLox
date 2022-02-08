@@ -26,6 +26,19 @@ public class Resolver : Expr.Visitor<object?>, Stmt.Visitor<object?>
         return null;
     }
 
+    public object? VisitClassStmt(Stmt.Class stmt)
+    {
+        Declare(stmt.Name);
+        Define(stmt.Name);
+
+        foreach (var method in stmt.Methods)
+        {
+            ResolveFunction(method, FunctionType.METHOD);
+        }
+
+        return null;
+    }
+
     public object? VisitExpressionStmt(Stmt.Expression stmt)
     {
         Resolve(stmt.Expr);
@@ -107,6 +120,12 @@ public class Resolver : Expr.Visitor<object?>, Stmt.Visitor<object?>
         return null;
     }
 
+    public object? VisitGetExpr(Expr.Get expr)
+    {
+        Resolve(expr.Object);
+        return null;
+    }
+
     public object? VisitGroupingExpr(Expr.Grouping expr)
     {
         Resolve(expr.Expression);
@@ -122,6 +141,13 @@ public class Resolver : Expr.Visitor<object?>, Stmt.Visitor<object?>
     {
         Resolve(expr.Left);
         Resolve(expr.Right);
+        return null;
+    }
+
+    public object? VisitSetExpr(Expr.Set expr)
+    {
+        Resolve(expr.Value);
+        Resolve(expr.Object);
         return null;
     }
 
@@ -203,6 +229,7 @@ public class Resolver : Expr.Visitor<object?>, Stmt.Visitor<object?>
     private enum FunctionType
     {
         NONE,
-        FUNCTION
+        FUNCTION,
+        METHOD,
     }
 }

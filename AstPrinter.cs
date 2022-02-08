@@ -21,6 +21,11 @@ public class AstPrinter : Expr.Visitor<string>
         throw new NotImplementedException();
     }
 
+    public string VisitGetExpr(Expr.Get expr)
+    {
+        throw new NotImplementedException();
+    }
+
     public string VisitGroupingExpr(Expr.Grouping expr)
     {
         return Parenthesize("group", expr.Expression);
@@ -32,6 +37,11 @@ public class AstPrinter : Expr.Visitor<string>
     }
 
     public string VisitLogicalExpr(Expr.Logical expr)
+    {
+        throw new NotImplementedException();
+    }
+
+    public string VisitSetExpr(Expr.Set expr)
     {
         throw new NotImplementedException();
     }

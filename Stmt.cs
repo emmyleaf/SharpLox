@@ -5,6 +5,7 @@ public interface Stmt
     public interface Visitor<T>
     {
         T VisitBlockStmt(Block stmt);
+        T VisitClassStmt(Class stmt);
         T VisitExpressionStmt(Expression stmt);
         T VisitFunctionStmt(Function stmt);
         T VisitIfStmt(If stmt);
@@ -19,6 +20,11 @@ public interface Stmt
     public record Block(List<Stmt> Statements) : Stmt
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitBlockStmt(this);
+    }
+
+    public record Class(Token Name, List<Function> Methods) : Stmt
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitClassStmt(this);
     }
 
     public record Expression(Expr Expr) : Stmt

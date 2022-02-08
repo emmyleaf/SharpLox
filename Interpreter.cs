@@ -38,6 +38,22 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         return null;
     }
 
+    public object? VisitClassStmt(Stmt.Class stmt)
+    {
+        environment.Define(stmt.Name.Lexeme, null);
+
+        Dictionary<String, LoxFunction> methods = new();
+        foreach (var method in stmt.Methods)
+        {
+            var function = new LoxFunction(method, environment);
+            methods[method.Name.Lexeme] = function;
+        }
+
+        var klass = new LoxClass(stmt.Name.Lexeme, methods);
+        environment.Assign(stmt.Name, klass);
+        return null;
+    }
+
     public object? VisitExpressionStmt(Stmt.Expression stmt)
     {
         Evaluate(stmt.Expr);
@@ -176,6 +192,17 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         return function.Call(this, arguments);
     }
 
+    public object? VisitGetExpr(Expr.Get expr)
+    {
+        var obj = Evaluate(expr.Object);
+        if (obj is LoxInstance instance)
+        {
+            return instance.Get(expr.Name);
+        }
+
+        throw new RuntimeError(expr.Name, "Only instances have properties.");
+    }
+
     public object? VisitGroupingExpr(Expr.Grouping expr)
     {
         return Evaluate(expr.Expression);
@@ -200,6 +227,19 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         }
 
         return Evaluate(expr.Right);
+    }
+
+    public object? VisitSetExpr(Expr.Set expr)
+    {
+        var obj = Evaluate(expr.Object);
+        if (obj is not LoxInstance instance)
+        {
+            throw new RuntimeError(expr.Name, "Only instances have fields.");
+        }
+
+        var value = Evaluate(expr.Value);
+        instance.Set(expr.Name, value);
+        return value;
     }
 
     public object? VisitUnaryExpr(Expr.Unary expr)

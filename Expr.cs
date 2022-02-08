@@ -7,9 +7,11 @@ public interface Expr
         T VisitAssignExpr(Assign expr);
         T VisitBinaryExpr(Binary expr);
         T VisitCallExpr(Call expr);
+        T VisitGetExpr(Get expr);
         T VisitGroupingExpr(Grouping expr);
         T VisitLiteralExpr(Literal expr);
         T VisitLogicalExpr(Logical expr);
+        T VisitSetExpr(Set expr);
         T VisitUnaryExpr(Unary expr);
         T VisitVariableExpr(Variable expr);
     }
@@ -31,6 +33,11 @@ public interface Expr
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitCallExpr(this);
     }
 
+    public record Get(Expr Object, Token Name) : Expr
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitGetExpr(this);
+    }
+
     public record Grouping(Expr Expression) : Expr
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitGroupingExpr(this);
@@ -44,6 +51,11 @@ public interface Expr
     public record Logical(Expr Left, Token Operator, Expr Right) : Expr
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitLogicalExpr(this);
+    }
+
+    public record Set(Expr Object, Token Name, Expr Value) : Expr
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitSetExpr(this);
     }
 
     public record Unary(Token Operator, Expr Right) : Expr
