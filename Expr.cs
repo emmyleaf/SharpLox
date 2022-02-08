@@ -12,6 +12,7 @@ public interface Expr
         T VisitLiteralExpr(Literal expr);
         T VisitLogicalExpr(Logical expr);
         T VisitSetExpr(Set expr);
+        T VisitThisExpr(This expr);
         T VisitUnaryExpr(Unary expr);
         T VisitVariableExpr(Variable expr);
     }
@@ -56,6 +57,11 @@ public interface Expr
     public record Set(Expr Object, Token Name, Expr Value) : Expr
     {
         public T Accept<T>(Visitor<T> visitor) => visitor.VisitSetExpr(this);
+    }
+
+    public record This(Token Keyword) : Expr
+    {
+        public T Accept<T>(Visitor<T> visitor) => visitor.VisitThisExpr(this);
     }
 
     public record Unary(Token Operator, Expr Right) : Expr

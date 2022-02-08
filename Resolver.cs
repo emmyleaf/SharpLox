@@ -4,6 +4,7 @@ public class Resolver : Expr.Visitor<object?>, Stmt.Visitor<object?>
 {
     private readonly Interpreter interpreter;
     private readonly Stack<Dictionary<string, bool>> scopes = new();
+    private ClassType currentClass = ClassType.NONE;
     private FunctionType currentFunction = FunctionType.NONE;
 
     public Resolver(Interpreter interpreter)
@@ -28,14 +29,23 @@ public class Resolver : Expr.Visitor<object?>, Stmt.Visitor<object?>
 
     public object? VisitClassStmt(Stmt.Class stmt)
     {
+        var enclosingClass = currentClass;
+        currentClass = ClassType.CLASS;
+
         Declare(stmt.Name);
         Define(stmt.Name);
+
+        BeginScope();
+        scopes.Peek()["this"] = true;
 
         foreach (var method in stmt.Methods)
         {
             ResolveFunction(method, FunctionType.METHOD);
         }
 
+        EndScope();
+
+        currentClass = enclosingClass;
         return null;
     }
 
@@ -151,6 +161,18 @@ public class Resolver : Expr.Visitor<object?>, Stmt.Visitor<object?>
         return null;
     }
 
+    public object? VisitThisExpr(Expr.This expr)
+    {
+        if (currentClass == ClassType.NONE)
+        {
+            Lox.Error(expr.Keyword, "Can't use 'this' outside of a class.");
+            return null;
+        }
+
+        ResolveLocal(expr, expr.Keyword);
+        return null;
+    }
+
     public object? VisitUnaryExpr(Expr.Unary expr)
     {
         Resolve(expr.Right);
@@ -225,6 +247,12 @@ public class Resolver : Expr.Visitor<object?>, Stmt.Visitor<object?>
 
     private void Resolve(Stmt stmt) => stmt.Accept(this);
     private void Resolve(Expr expr) => expr.Accept(this);
+
+    private enum ClassType
+    {
+        NONE,
+        CLASS,
+    }
 
     private enum FunctionType
     {

@@ -13,6 +13,13 @@ public class LoxFunction : LoxCallable
 
     public int Arity => declaration.Parameters.Count;
 
+    public LoxFunction Bind(LoxInstance instance)
+    {
+        var environment = new Env(closure);
+        environment.Define("this", instance);
+        return new LoxFunction(declaration, environment);
+    }
+
     public object? Call(Interpreter interpreter, List<object?> arguments)
     {
         var environment = new Env(closure);
