@@ -5,7 +5,7 @@ public class LoxClass : LoxCallable
     public readonly string Name;
     private readonly Dictionary<String, LoxFunction> methods;
 
-    public int Arity => 0;
+    public int Arity => FindMethod("init")?.Arity ?? 0;
 
     public LoxClass(string name, Dictionary<String, LoxFunction> methods)
     {
@@ -16,6 +16,12 @@ public class LoxClass : LoxCallable
     public object? Call(Interpreter interpreter, List<object?> arguments)
     {
         var instance = new LoxInstance(this);
+
+        if (FindMethod("init") is LoxFunction initializer)
+        {
+            initializer.Bind(instance).Call(interpreter, arguments);
+        }
+
         return instance;
     }
 

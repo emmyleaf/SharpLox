@@ -40,7 +40,8 @@ public class Resolver : Expr.Visitor<object?>, Stmt.Visitor<object?>
 
         foreach (var method in stmt.Methods)
         {
-            ResolveFunction(method, FunctionType.METHOD);
+            var type = method.Name.Lexeme == "init" ? FunctionType.INITIALIZER : FunctionType.METHOD;
+            ResolveFunction(method, type);
         }
 
         EndScope();
@@ -83,7 +84,14 @@ public class Resolver : Expr.Visitor<object?>, Stmt.Visitor<object?>
         {
             Lox.Error(stmt.Keyword, "Can't return from top-level code.");
         }
-        if (stmt.Value is not null) Resolve(stmt.Value);
+        if (stmt.Value is not null)
+        {
+            if (currentFunction == FunctionType.INITIALIZER)
+            {
+                Lox.Error(stmt.Keyword, "Can't return a value from an initializer.");
+            }
+            Resolve(stmt.Value);
+        }
         return null;
     }
 
@@ -258,6 +266,7 @@ public class Resolver : Expr.Visitor<object?>, Stmt.Visitor<object?>
     {
         NONE,
         FUNCTION,
+        INITIALIZER,
         METHOD,
     }
 }

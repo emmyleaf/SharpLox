@@ -4,11 +4,13 @@ public class LoxFunction : LoxCallable
 {
     private readonly Stmt.Function declaration;
     private readonly Env closure;
+    private readonly bool isInitializer;
 
-    public LoxFunction(Stmt.Function declaration, Env closure)
+    public LoxFunction(Stmt.Function declaration, Env closure, bool isInitializer)
     {
         this.declaration = declaration;
         this.closure = closure;
+        this.isInitializer = isInitializer;
     }
 
     public int Arity => declaration.Parameters.Count;
@@ -17,7 +19,7 @@ public class LoxFunction : LoxCallable
     {
         var environment = new Env(closure);
         environment.Define("this", instance);
-        return new LoxFunction(declaration, environment);
+        return new LoxFunction(declaration, environment, isInitializer);
     }
 
     public object? Call(Interpreter interpreter, List<object?> arguments)
@@ -34,8 +36,11 @@ public class LoxFunction : LoxCallable
         }
         catch (Return returnValue)
         {
+            if (isInitializer) return closure.GetAt(0, "this");
             return returnValue.Value;
         }
+
+        if (isInitializer) return closure.GetAt(0, "this");
         return null;
     }
 

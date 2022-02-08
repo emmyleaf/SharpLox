@@ -45,7 +45,8 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
         Dictionary<String, LoxFunction> methods = new();
         foreach (var method in stmt.Methods)
         {
-            var function = new LoxFunction(method, environment);
+            var isInitializer = method.Name.Lexeme == "init";
+            var function = new LoxFunction(method, environment, isInitializer);
             methods[method.Name.Lexeme] = function;
         }
 
@@ -62,7 +63,7 @@ public class Interpreter : Expr.Visitor<object?>, Stmt.Visitor<object?>
 
     public object? VisitFunctionStmt(Stmt.Function stmt)
     {
-        var function = new LoxFunction(stmt, environment);
+        var function = new LoxFunction(stmt, environment, false);
         environment.Define(stmt.Name.Lexeme, function);
         return null;
     }
